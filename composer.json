@@ -1,10 +1,13 @@
 {
-    "name": "nwidart/telegrambot",
-    "description": "",
+    "name": "altrpaid/telegrambot-module",
+    "type": "laravel-module",
+    "description": "Plugin for telegram bots",
+    "license": "MIT",
+    "minimum-stability": "dev",
     "authors": [
         {
-            "name": "Nicolas Widart",
-            "email": "n.widart@gmail.com"
+            "name": "AkimovIgor",
+            "email": "akimovigor5417@gmail.com"
         }
     ],
     "extra": {

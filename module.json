@@ -1,0 +1,14 @@
+{
+    "name": "TelegramBot",
+    "alias": "telegrambot",
+    "image": "/modules/telegrambot/img/tg.png",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\TelegramBot\\Providers\\TelegramBotServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

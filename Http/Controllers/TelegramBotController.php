@@ -26,6 +26,7 @@ class TelegramBotController extends Controller
      */
     public function index()
     {
+//        dd($this->telegramBotService->getBotInfo());
         return view('telegrambot::index');
     }
 
@@ -45,8 +46,8 @@ class TelegramBotController extends Controller
     public function webhook()
     {
         $updates = $this->telegramBotService->getUpdates();
-        $this->telegramBotService->handleUpdates($updates);
-        $this->telegramBotService->handleCommands();
+//        $this->telegramBotService->handleUpdates($updates);
+//        $this->telegramBotService->handleCommands();
     }
 
     public function getWebhookinfo(Request $request)

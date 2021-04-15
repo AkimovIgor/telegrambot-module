@@ -3,10 +3,7 @@
 namespace Modules\TelegramBot\Services;
 
 use Jackiedo\DotenvEditor\Facades\DotenvEditor;
-use Modules\TelegramBot\Entities\TelegramUser;
-use Telegram\Bot\Api;
-use Telegram\Bot\Laravel\Facades\Telegram;
-use Telegram\Bot\Objects\Update;
+use WeStacks\TeleBot\BotManager;
 
 class TelegramBotService
 {
@@ -14,36 +11,43 @@ class TelegramBotService
 
     public function __construct()
     {
-        $this->bot = new Api(
-            config('telegram.bots.mybot.token'),
-            config('telegram.async_requests')
-        );
+        $this->bot = new BotManager(config('telebot'));
     }
 
     public function getBotInfo()
     {
-        return Telegram::getMe();
+        return $this->bot->getMe();
     }
 
     public function getUpdates()
     {
         if (env('APP_ENV') == 'p') {
-            $updates = Telegram::getUpdates();
+            $updates = [];
+            $last_offset = 0;
+            while (true) {
+                $updates = $this->bot->getUpdates([
+                    'offset' => $last_offset + 1
+                ]);
+                foreach ($updates as $update) {
+                    $this->bot->handleUpdate($update);
+                    $last_offset = $update->update_id;
+                }
+            }
         } else {
-            $updates = [Telegram::getWebhookUpdates()];
+            $updates = [$this->bot->handleUpdate()];
         }
         return $updates;
     }
 
     public function getWebhookInfo()
     {
-        return Telegram::getWebhookInfo();
+        return $this->bot->getWebhookInfo();
     }
 
     public function setWebhook($params)
     {
         try {
-            $response = Telegram::setWebhook($params);
+            $response = $this->bot->setWebhook($params);
         } catch (\Exception $e) {
             return false;
         }
@@ -59,12 +63,12 @@ class TelegramBotService
 
     public function handleCommands()
     {
-        if (env('APP_ENV') == 'p') {
-            $update = Telegram::commandsHandler(false, ['timeout' => 20]);
-        } else {
-            $update = Telegram::commandsHandler(true);
-        }
-        return $update;
+//        if (env('APP_ENV') == 'p') {
+//            $update = Telegram::commandsHandler(false, ['timeout' => 20]);
+//        } else {
+//            $update = Telegram::commandsHandler(true);
+//        }
+        return 1;
     }
 
     public function handleUpdates($updates)

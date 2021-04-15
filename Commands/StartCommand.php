@@ -5,52 +5,51 @@ namespace Modules\TelegramBot\Commands;
 
 
 use Modules\TelegramBot\Entities\TelegramUser;
-use Telegram\Bot\Actions;
-use Telegram\Bot\Commands\Command;
-use Telegram\Bot\Objects\Update;
+use Modules\TelegramBot\Services\TelegramBotService;
+use WeStacks\TeleBot\Handlers\CommandHandler;
+use WeStacks\TeleBot\Objects\Update;
+use WeStacks\TeleBot\TeleBot;
 
-class StartCommand extends Command
+class StartCommand extends CommandHandler
 {
+    protected $botService;
 
-    /**
-     * @var string Command Name
-     */
-    protected $name = "start";
+    protected static $aliases = [ '/start', '/s' ];
 
-    /**
-     * @var string Command Description
-     */
-    protected $description = "Start Command to get you started";
+    protected static $description = 'Send "/start" or "/s" to get "Hello, World!"';
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(TelegramBotService $telegramBotService, TeleBot $bot, Update $update)
+    {
+        $this->botService = $telegramBotService;
+        parent::__construct($bot, $update);
+    }
+
     public function handle()
     {
-        $update = $this->getUpdate();
-        $data = json_decode($update->getMessage()->getFrom());
+//        $update = $this->getUpdate();
+//        $data = json_decode($update->getMessage()->getFrom());
+//
+//        if (! TelegramUser::whereChatId($data->id)->first()) {
+//            $telegramUser = new TelegramUser([
+//                'chat_id' => $data->id,
+//                'is_bot' => $data->is_bot,
+//                'first_name' => $data->first_name,
+//                'last_name' => $data->last_name,
+//                'username' => $data->username,
+//                'language_code' => $data->language_code,
+//            ]);
+//
+//            $telegramUser->save();
+//            $this->replyWithMessage(['text' => 'Successfully authorized!']);
+//        }
+//
+//        $commands = $this->getTelegram()->getCommands();
+//
+//        $response = 'Hello! Your allowed list of commands: ' . "\n\n";
+//        foreach ($commands as $name => $command) {
+//            $response .= sprintf('/%s - %s' . PHP_EOL, $name, $command->getDescription());
+//        }
 
-        if (! TelegramUser::whereChatId($data->id)->first()) {
-            $telegramUser = new TelegramUser([
-                'chat_id' => $data->id,
-                'is_bot' => $data->is_bot,
-                'first_name' => $data->first_name,
-                'last_name' => $data->last_name,
-                'username' => $data->username,
-                'language_code' => $data->language_code,
-            ]);
-
-            $telegramUser->save();
-            $this->replyWithMessage(['text' => 'Successfully authorized!']);
-        }
-
-        $commands = $this->getTelegram()->getCommands();
-
-        $response = 'Hello! Your allowed list of commands: ' . "\n\n";
-        foreach ($commands as $name => $command) {
-            $response .= sprintf('/%s - %s' . PHP_EOL, $name, $command->getDescription());
-        }
-
-        $this->replyWithMessage(['text' => $response]);
+        $this->sendMessage(['text' => 1]);
     }
 }

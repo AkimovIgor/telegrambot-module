@@ -39,6 +39,7 @@ class TelegramBotServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->register(RouteServiceProvider::class);
+        $this->app->register(\WeStacks\TeleBot\Laravel\TeleBotServiceProvider::class);
     }
 
     /**
@@ -55,10 +56,10 @@ class TelegramBotServiceProvider extends ServiceProvider
             module_path($this->moduleName, 'Config/config.php'), $this->moduleNameLower
         );
         $this->mergeConfigFrom(
-            module_path($this->moduleName, 'Config/telegram.php'), 'telegram'
+            module_path($this->moduleName, 'Config/telebot.php'), 'telebot'
         );
         $this->publishes([
-            module_path($this->moduleName, 'Config/telegram.php') => config_path('telegrambot.php'),
+            module_path($this->moduleName, 'Config/telebot.php') => config_path('telebot.php'),
         ], 'config');
     }
 

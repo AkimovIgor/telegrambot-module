@@ -32,7 +32,7 @@
                                 <form class="webhook-set" action="{{ route('telegrambot.set_webhook') }}" method="POST">
                                     <div class="form-group">
                                         <label for="url">Webhook URI</label>
-                                        <input type="text" class="form-control" name="url" id="url" value="{{config('telegram.bots.mybot.webhook_url') }}">
+                                        <input type="text" class="form-control" name="url" id="url" value="{{config('telebot.bots.akimigor_bot.webhook.url') }}">
                                     </div>
                                     @csrf
                                 </form>
@@ -54,7 +54,7 @@
                                     @csrf
                                     <div class="form-group">
                                         <label for="bot_token">Telegram API token</label>
-                                        <input type="text" class="form-control" name="bot_token" id="bot_token" value="{{ config('telegram.bots.mybot.token') }}">
+                                        <input type="text" class="form-control" name="bot_token" id="bot_token" value="{{ config('telebot.bots.akimigor_bot.token') }}">
                                     </div>
                                     <div class="form-group">
                                         <label for="certificate_path">Path to SSL certificate</label>
@@ -62,7 +62,7 @@
                                     </div>
                                     <div class="form-check pb-3">
                                         <input type="hidden" name="async_requests" value="false">
-                                        <input type="checkbox" class="form-check-input" id="async_requests" @if(config('telegram.async_requests')) checked @endif name="async_requests" value="true">
+                                        <input type="checkbox" class="form-check-input" id="async_requests" @if(config('telebot.async')) checked @endif name="async_requests" value="true">
                                         <label class="form-check-label" for="async_requests">Enable async requests</label>
                                     </div>
                                     <div class="form-group">

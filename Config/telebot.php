@@ -16,7 +16,8 @@ return [
                 // 'allowed_updates'   => ["message", "edited_channel_post", "callback_query"]
             ],
             'handlers'      => [
-                \Modules\TelegramBot\Commands\StartCommand::class
+                \Modules\TelegramBot\Commands\StartCommand::class,
+                \Modules\TelegramBot\Handlers\UpdateHandler::class
             ],
 //            'poll'    => [
 //                'limit'             => 100,

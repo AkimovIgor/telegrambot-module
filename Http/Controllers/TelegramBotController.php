@@ -46,6 +46,7 @@ class TelegramBotController extends Controller
     public function webhook()
     {
         $updates = $this->telegramBotService->getUpdates();
+//        return $updates;
 //        $this->telegramBotService->handleUpdates($updates);
 //        $this->telegramBotService->handleCommands();
     }

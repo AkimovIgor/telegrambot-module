@@ -3,6 +3,7 @@
 namespace Modules\TelegramBot\Services;
 
 use Jackiedo\DotenvEditor\Facades\DotenvEditor;
+use Modules\TelegramBot\Handlers\UpdateHandler;
 use WeStacks\TeleBot\BotManager;
 
 class TelegramBotService
@@ -21,7 +22,7 @@ class TelegramBotService
 
     public function getUpdates()
     {
-        if (env('APP_ENV') == 'p') {
+        if (env('APP_ENV') == 'local') {
             $updates = [];
             $last_offset = 0;
             while (true) {
@@ -31,10 +32,12 @@ class TelegramBotService
                 foreach ($updates as $update) {
                     $this->bot->handleUpdate($update);
                     $last_offset = $update->update_id;
+
+                    $this->bot->callHandler(UpdateHandler::class, $update, true);
                 }
             }
         } else {
-            $updates = [$this->bot->handleUpdate()];
+            $updates = $this->bot->handleUpdate();
         }
         return $updates;
     }

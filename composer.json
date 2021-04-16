@@ -12,9 +12,11 @@
     ],
     "extra": {
         "laravel": {
-            "providers": [],
+            "providers": [
+                "WeStacks\\TeleBot\\Laravel\\TeleBotServiceProvider"
+            ],
             "aliases": {
-
+                "TeleBot": "WeStacks\\TeleBot\\Laravel\\TeleBot"
             }
         }
     },

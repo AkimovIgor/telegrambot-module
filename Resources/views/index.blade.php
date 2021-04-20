@@ -36,6 +36,10 @@
                                     </div>
                                     @csrf
                                 </form>
+                                <form class="webhook-delete" action="{{ route('telegrambot.delete_webhook') }}" method="POST">
+                                    @method('DELETE')
+                                    @csrf
+                                </form>
 
                                 <div class="form-group">
                                     <label for="action">Action</label>
@@ -53,22 +57,50 @@
                                 <form action="{{ route('telegrambot.settings') }}" method="POST">
                                     @csrf
                                     <div class="form-group">
-                                        <label for="bot_token">Telegram API token</label>
-                                        <input type="text" class="form-control" name="bot_token" id="bot_token" value="{{ config('telebot.bots.akimigor_bot.token') }}">
+                                        <label for="bot_name">Telegram bot name</label>
+                                        <input type="text" class="form-control" name="bot_name" id="bot_name" value="{{ config('telebot.default') }}">
                                     </div>
                                     <div class="form-group">
-                                        <label for="certificate_path">Path to SSL certificate</label>
-                                        <input type="text" class="form-control" name="certificate_path" id="certificate_path" value="{{ config('telegram.bots.mybot.certificate_path') }}">
+                                        <label for="bot_token">Telegram bot API token</label>
+                                        <input type="text" class="form-control" name="bot_token" id="bot_token" value="{{ config('telebot.bots.' . config('telebot.default') . '.token') }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bot_cert_path">Path to SSL certificate</label>
+                                        <input type="text" class="form-control" name="bot_cert_path" id="bot_cert_path" value="{{ config('telebot.bots.' . config('telebot.default') . '.webhook.certificate') }}">
                                     </div>
                                     <div class="form-check pb-3">
                                         <input type="hidden" name="async_requests" value="false">
-                                        <input type="checkbox" class="form-check-input" id="async_requests" @if(config('telebot.async')) checked @endif name="async_requests" value="true">
+                                        <input type="checkbox" class="form-check-input" id="async_requests" @if(config('telebot.bots.' . config('telebot.default') . '.async')) checked @endif name="async_requests" value="true">
                                         <label class="form-check-label" for="async_requests">Enable async requests</label>
                                     </div>
+                                    <div class="form-check pb-3">
+                                        <input type="hidden" name="bot_debug" value="false">
+                                        <input type="checkbox" class="form-check-input" id="bot_debug" @if(config('telebot.bots.' . config('telebot.default') . '.exceptions')) checked @endif name="bot_debug" value="true">
+                                        <label class="form-check-label" for="bot_debug">Debug mode</label>
+                                    </div>
+
+                                    <h5>Additional settings</h5>
+
+                                    <div class="form-group">
+                                        <label for="settings_start_message">Start message text</label>
+                                        <textarea type="text" class="form-control" name="settings_start_message" id="settings_start_message">@if($bot && $bot->settings && $bot->settings->start_message){{ $bot->settings->start_message }}@endif</textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="settings_roles">Allowed roles</label><br>
+                                        <select multiple="multiple" class="" id="settings_roles" name="settings_roles[]">
+                                            @foreach($roles as $role)
+                                                <option value="{{ $role->id }}" @if($bot && $bot->settings && $bot->settings->roles && in_array((string)$role->id, $bot->settings->roles)) selected @endif>{{ $role->display_name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
                                     <div class="form-group">
                                         <button class="btn btn-primary" type="submit">Save</button>
                                     </div>
+
                                 </form>
+
                             </div>
                         </div>
                     </div>

@@ -7,17 +7,16 @@ namespace Modules\TelegramBot\Commands;
 use Modules\TelegramBot\Entities\TelegramBot;
 use Modules\TelegramBot\Entities\TelegramUser;
 use WeStacks\TeleBot\Handlers\CommandHandler;
-use WeStacks\TeleBot\Objects\BotCommand;
 use WeStacks\TeleBot\Objects\InlineKeyboardButton;
 use WeStacks\TeleBot\Objects\Keyboard\ReplyKeyboardMarkup;
 use WeStacks\TeleBot\Objects\Update;
 use WeStacks\TeleBot\TeleBot;
 
-class StartCommand extends CommandHandler
+class RegisterCommand extends CommandHandler
 {
-    protected static $aliases = [ '/start'];
+    protected static $aliases = [ '/register'];
 
-    protected static $description = 'Запустить бота или поздороваться с ним.';
+    protected static $description = 'Пройти регистрацию.';
 
     public function __construct(TeleBot $bot, Update $update)
     {

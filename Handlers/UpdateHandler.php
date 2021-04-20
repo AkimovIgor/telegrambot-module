@@ -3,10 +3,13 @@
 
 namespace Modules\TelegramBot\Handlers;
 
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use App\User;
 use App\Role;
+use Modules\TelegramBot\Entities\TelegramBot;
+use Modules\TelegramBot\Mails\ConfirmCode;
 use WeStacks\TeleBot\Interfaces\UpdateHandler as BaseUpdateHandler;
 use WeStacks\TeleBot\Objects\InlineKeyboardButton;
 use WeStacks\TeleBot\Objects\Keyboard\ReplyKeyboardMarkup;
@@ -36,7 +39,9 @@ class UpdateHandler extends BaseUpdateHandler
                     $this->answerCallbackQuery([
                         'callback_query_id' => $update->callback_query->id
                     ]);
-                    $this->setRole();
+                    $this->sendMessage([
+                        'text' => 'Введите Ваш email:'
+                    ]);
                     break;
                 case 'help':
                     $this->answerCallbackQuery([
@@ -49,7 +54,7 @@ class UpdateHandler extends BaseUpdateHandler
                     $this->answerCallbackQuery([
                         'callback_query_id' => $update->callback_query->id,
                     ]);
-                    $this->generateNewPassword($searchUser->user_id, (int)str_replace('setpassword_', '', $update->callback_query->data));
+                    $this->generateNewPassword($searchUser->user_id ?? false, (int)str_replace('setpassword_', '', $update->callback_query->data));
                     break;
                 case (preg_match('/^changepassword/', $update->callback_query->data) ? true : false):
                     $this->answerCallbackQuery([
@@ -70,56 +75,158 @@ class UpdateHandler extends BaseUpdateHandler
                     $searchUser = TelegramUser::where('chat_id', $this->update->callback_query->from->id)->first();
                     $this->generateNewPassword($searchUser->user_id, (int)str_replace('setrole_', '', $update->callback_query->data));
                     break;
+                case (preg_match('/^sendcode/', $update->callback_query->data) ? true : false):
+                    $this->answerCallbackQuery([
+                        'callback_query_id' => $update->callback_query->id,
+                    ]);
+                    $email = str_replace('sendcode_', '', $update->callback_query->data);
+                    $this->sendCodeToMail($email);
+                    break;
+            }
+        }
+
+        if (isset($update->message)) {
+            switch ($update->message->text) {
+                case filter_var($update->message->text, FILTER_VALIDATE_EMAIL):
+                    $this->sendCodeToMail($update->message->text);
+                    break;
+                case (Str::contains($update->message->text, 'XpQR') && Str::contains($update->message->text, 'vP')):
+                    $this->acceptConfirmationCode($update->message->text);
+                    break;
             }
         }
     }
 
+    /**
+     * Подтвердить код подтверждения
+     * @param $code
+     * @throws \WeStacks\TeleBot\Exception\TeleBotObjectException
+     */
+    protected function acceptConfirmationCode($code)
+    {
+        if (session('confirm_code')) {
+            if (session('confirm_code') != $code) {
+                $this->sendMessage([
+                    'text' => 'Неправильный код подтверждения.'
+                ]);
+                return;
+            }
+            session()->remove('confirm_code');
+            $this->setRole();
+        } else {
+            $this->sendMessage([
+                'text' => 'Код подтверждения не найден.'
+            ]);
+        }
+    }
+
+    /**
+     * Отправить код подтверждения на email
+     * @param $email
+     * @throws \WeStacks\TeleBot\Exception\TeleBotObjectException
+     */
+    protected function sendCodeToMail($email)
+    {
+        if (preg_match("/^[a-z0-9\-\_]+\@([a-z0-9\-\_]+\.)+[a-z]{2,6}$/i", $email)) {
+
+            $checkUser = User::where('email', $email)->first();
+            if ($checkUser) {
+                $this->sendMessage([
+                    'text' => 'Пользователь с таким email уже зарегистрирован.'
+                ]);
+                return;
+            }
+
+            $keyboard = [
+                [
+                    (new InlineKeyboardButton([
+                        'text' => 'Отправить код ещё раз',
+                        'callback_data' => 'sendcode_' . $email
+                    ]))
+                ],
+            ];
+
+            $replyMarkup = ReplyKeyboardMarkup::create([
+                'inline_keyboard' => $keyboard,
+                'resize_keyboard' => true,
+                'one_time_keyboard' => true
+            ]);
+
+            try {
+                $code = 'XpQR' .  Str::random(6) . 'vP';
+                session()->put('confirm_code', $code);
+                Mail::to($email)->send(new ConfirmCode($code));
+                session()->put('telegram_user_email', $email);
+                $this->sendMessage([
+                    'text' => 'На Ваш email отправлен код подтверждения. Введите его далее:',
+                    'reply_markup' => $replyMarkup
+                ]);
+            } catch (\Exception $e) {
+                $this->sendMessage([
+                    'text' => 'Введенный Вами email не существует.'
+                ]);
+            }
+        } else {
+            $this->sendMessage([
+                'text' => 'Вы ошиблись при вводе email.'
+            ]);
+        }
+    }
+
+    /**
+     * Задать новую роль пользователю
+     * @throws \WeStacks\TeleBot\Exception\TeleBotObjectException
+     */
     protected function setRole()
     {
-        $roles = Role::where('name', '!=', 'admin')->get();
-        $count = floor($roles->count() / 2);
-        $kRows = [];
+        $bot = TelegramBot::where(
+            'bot_token',
+            config('telebot.bots.' . config('telebot.default') . '.token')
+        )->first();
+
+        if ($bot && $bot->settings && $bot->settings->roles) {
+            $roles = Role::whereIn('id', $bot->settings->roles)->get();
+        } else {
+            $roles = Role::where('name', '!=', 'admin')->get();
+        }
+
         $kButtonts = [];
 
-        // for ($i = 0; $i < $count - 1; $i++) {
-        //     $kButtonts[] =
-        //     if ($i % 2 == 0) {
-
-        //     }
-        // }
-
-        $i = 0;
-
         foreach ($roles as $role) {
-            if ($i % 2 == 0) {
-                $kRows[] = $kButtonts;
-                $kButtonts = [];
-            }
-            $kButtonts[] = (new InlineKeyboardButton([
+            $kButtonts[][] = (new InlineKeyboardButton([
                 'text' => $role->display_name,
                 'callback_data' => 'setrole_' . $role->id
             ]));
-            $i++;
         }
 
         $replyMarkup = ReplyKeyboardMarkup::create([
-            'inline_keyboard' => $kRows,
+            'inline_keyboard' => $kButtonts,
             'resize_keyboard' => true,
             'one_time_keyboard' => true
         ]);
 
         $this->sendMessage([
-            'text' => "Выбери роль, под которой тебя авторизовать:",
+            'text' => "Выберите роль, под которой Вас авторизовать:",
             'reply_markup' => $replyMarkup
         ]);
     }
 
+    /**
+     * Изменить существующий пароль
+     * @param $data
+     * @throws \WeStacks\TeleBot\Exception\TeleBotObjectException
+     */
     protected function changePassword($data)
     {
         $value = str_replace('changepassword_', '', $data);
 
         if ($value == 'yes') {
             $searchUser = TelegramUser::where('chat_id', $this->update->callback_query->from->id)->first();
+            if (!$searchUser->user_id) {
+                $this->sendMessage([
+                    'text' => "Вы не зарегистрированы в системе."
+                ]);
+            }
             $userId = $searchUser->user_id;
             $searchUser->update(['user_id' => $userId]);
             $this->generateNewPassword($userId);
@@ -130,14 +237,18 @@ class UpdateHandler extends BaseUpdateHandler
         }
     }
 
+    /**
+     * Сгенерировать новый пароль
+     * @param bool $changed
+     * @param int $role
+     * @throws \WeStacks\TeleBot\Exception\TeleBotObjectException
+     */
     protected function generateNewPassword($changed = false, $role = 0)
     {
         $newPassword = Str::random(8);
         $changed = $changed ? "_{$changed}_{$role}" : "_0_{$role}";
 
         $callbackData = 'passwordsuccess_' . $newPassword . $changed;
-
-        // \Log::info($callbackData);
 
         $genPasswKeyboard = [
             [
@@ -146,7 +257,7 @@ class UpdateHandler extends BaseUpdateHandler
                     'callback_data' => $callbackData
                 ])),
                 (new InlineKeyboardButton([
-                    'text' => 'Cгенерировать новый',
+                    'text' => 'Генерировать',
                     'callback_data' => "setpassword_{$role}"
                 ])),
             ],
@@ -159,30 +270,25 @@ class UpdateHandler extends BaseUpdateHandler
         ]);
 
         $this->sendMessage([
-            'text' => "Сгенерирован новый пароль: " . $newPassword . "",
+            'text' => "Сгенерирован новый пароль:\n<b>" . $newPassword . "</b>",
+            'parse_mode' => 'HTML',
             'reply_markup' => $replyMarkup
         ]);
     }
 
+    /**
+     * Подтвердить сгенерированный пароль
+     * @param $data
+     * @throws \WeStacks\TeleBot\Exception\TeleBotObjectException
+     */
     protected function successPassword($data)
     {
+        $searchUser = TelegramUser::where('chat_id', $this->update->callback_query->from->id)->first();
         $parts = explode('_', $data);
         $password = Hash::make($parts[1]);
         $name = $this->update->callback_query->from->first_name . ' ' . $this->update->callback_query->from->last_name;
-        $email = 'user' . Str::random(6) . '@gmail.com';
+        $email = session('telegram_user_email') ?? $searchUser->user->email;
         $role = (int)$parts[3];
-
-        $searchUser = TelegramUser::where('chat_id', $this->update->callback_query->from->id)->first();
-
-        // $replyMarkupRemove = ReplyKeyboardRemove::create([
-        //     'remove_keyboard' => true
-        // ]);
-
-        // \Log::info((int)$parts[2]);
-
-        // $this->sendMessage([
-        //     'text' => 'Пароль успешно изменен'
-        // ]);
 
         $changePasswKeyboard = [
             [
@@ -196,8 +302,6 @@ class UpdateHandler extends BaseUpdateHandler
                 ])),
             ],
         ];
-
-
 
         $replyMarkup = ReplyKeyboardMarkup::create([
             'inline_keyboard' => $changePasswKeyboard,
@@ -218,24 +322,25 @@ class UpdateHandler extends BaseUpdateHandler
                 $user->roles()->attach($role);
             }
 
-            // \Log::info(self::$role);
-
             $searchUser->update(['user_id' => $user->id]);
 
             $this->sendMessage([
-                'text' => "Пользователь успешно создан!\n\nВаши данные для авторизации:\nИмя: {$user->name}\nEmail: {$user->email}\nПароль: {$parts[1]}",
-                // 'reply_markup' => $replyMarkupRemove
+                'text' => "Пользователь успешно создан!\n\nВаши данные для авторизации:\n<b>Имя:</b> {$user->name}\n<b>Email:</b> {$user->email}\n<b>Пароль:</b> {$parts[1]}\n/info",
+                'parse_mode' => 'HTML'
             ]);
         } elseif ($userId = (int)$parts[2]) {
             $user = User::find($userId);
             $user->password = $password;
+            $user->email = $email;
             $user->save();
             if (isset($role) && $role) {
                 $user->roles()->detach($user->roles);
                 $user->roles()->attach($role);
             }
+            session()->remove('telegram_user_email');
             $this->sendMessage([
-                'text' => "Пароль успешно изменен.\n\nВаши данные для авторизации:\nИмя: {$user->name}\nEmail: {$user->email}\nПароль: {$parts[1]}"
+                'text' => "Пароль успешно изменен.\n\nВаши данные для авторизации:\n<b>Имя:</b> {$user->name}\n<b>Email:</b> {$user->email}\n<b>Пароль:</b> {$parts[1]}\n/info",
+                'parse_mode' => 'HTML'
             ]);
         } else {
             $this->sendMessage([
@@ -245,12 +350,17 @@ class UpdateHandler extends BaseUpdateHandler
         }
     }
 
+    /**
+     * Получить список существующих локальных команд
+     */
     protected function getHelpCommand()
     {
         $commands = $this->bot->getLocalCommands();
-        $response = 'Тебе доступны следующие команды: ' . "\n\n";
+        $response = 'Вам доступны следующие команды: ' . "\n\n";
         foreach ($commands as $name => $command) {
-            $response .= sprintf('%s - %s' . PHP_EOL, $command->command, $command->description);
+            if ($command->command != '/start') {
+                $response .= sprintf('%s - %s' . PHP_EOL, $command->command, $command->description);
+            }
         }
         $this->sendMessage([
             'text' => $response

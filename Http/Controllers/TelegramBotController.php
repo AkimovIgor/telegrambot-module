@@ -2,12 +2,14 @@
 
 namespace Modules\TelegramBot\Http\Controllers;
 
+use App\Role;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Jackiedo\DotenvEditor\Facades\DotenvEditor;
+use Modules\TelegramBot\Entities\TelegramBot;
 use Modules\TelegramBot\Services\TelegramBotService;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
@@ -26,17 +28,35 @@ class TelegramBotController extends Controller
      */
     public function index()
     {
-//        dd($this->telegramBotService->getBotInfo());
-        return view('telegrambot::index');
+        $bot = TelegramBot::where('bot_token', config('telebot.bots.' . config('telebot.default') . '.token'))->first();
+        $roles = Role::all();
+        return view('telegrambot::index', compact('bot', 'roles'));
     }
 
     public function settings(Request $request)
     {
-        $data = $request->except('_token');
+        $data = $request->except([
+            '_token',
+            'settings_start_message',
+            'settings_roles',
+        ]);
         foreach ($data as $key => $value) {
             DotenvEditor::setKey('TELEGRAM_' . strtoupper($key), $value);
             DotenvEditor::save();
         }
+
+        if (!$botSetting = TelegramBot::where('bot_token', $data['bot_token'])->first()) {
+            $botSetting = new TelegramBot();
+        }
+        $data['async_requests'] = $data['async_requests'] == 'true' ? 1 : 0;
+        $data['bot_debug'] = $data['bot_debug'] == 'true' ? 1 : 0;
+        $data['settings'] = [
+            'start_message' => $request->settings_start_message,
+            'roles' => $request->settings_roles
+        ];
+        $botSetting->fill($data);
+        $botSetting->save();
+
         return redirect()->back()->with([
             'class' => 'success',
             'message' => 'Config saved.',
@@ -45,25 +65,27 @@ class TelegramBotController extends Controller
 
     public function webhook()
     {
-        $updates = $this->telegramBotService->getUpdates();
-//        return $updates;
-//        $this->telegramBotService->handleUpdates($updates);
-//        $this->telegramBotService->handleCommands();
+        $this->telegramBotService->getUpdates();
     }
 
     public function getWebhookinfo(Request $request)
     {
         $result = json_decode($this->telegramBotService->getWebhookInfo());
         $hasCertificates = $result->has_custom_certificate ?: 'false';
-        return redirect()->back()->with([
-            'class' => 'info',
-            'message' => "
+        if ($result->url) {
+            $message = "
                     <b>URL:</b> {$result->url}<br>
                     <b>Certificates:</b> {$hasCertificates}<br>
                     <b>Pending update count:</b> {$result->pending_update_count}<br>
                     <b>Max connections:</b> {$result->max_connections}<br>
                     <b>IP:</b> {$result->ip_address}
-                "
+                ";
+        } else {
+            $message = 'Webhook don\'t  set.';
+        }
+        return redirect()->back()->with([
+            'class' => 'info',
+            'message' => $message
         ]);
     }
 
@@ -81,14 +103,38 @@ class TelegramBotController extends Controller
         }
 
         $result = $this->telegramBotService->setWebhook($params);
-        if ($result)
+
+        if ($result) {
+            DotenvEditor::setKey('TELEGRAM_WEBHOOK_URL', $params['url']);
+            DotenvEditor::save();
             return redirect()->back()->with([
                 'class' => 'success',
                 'message' => 'Webhook successfully attached.'
             ]);
+        }
+
         return redirect()->back()->with([
             'class' => 'danger',
             'message' => 'Failed to attach webhook, please check your url.'
+        ]);
+    }
+
+    public function deleteWebhook()
+    {
+        $result = $this->telegramBotService->setWebhook(['url' => '']);
+
+        if ($result) {
+            DotenvEditor::setKey('TELEGRAM_WEBHOOK_URL', '');
+            DotenvEditor::save();
+            return redirect()->back()->with([
+                'class' => 'success',
+                'message' => 'Webhook was deleted.'
+            ]);
+        }
+
+        return redirect()->back()->with([
+            'class' => 'danger',
+            'message' => 'Failed to delete webhook.'
         ]);
     }
 

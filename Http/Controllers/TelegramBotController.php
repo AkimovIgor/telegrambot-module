@@ -11,7 +11,6 @@ use Illuminate\Validation\Rule;
 use Jackiedo\DotenvEditor\Facades\DotenvEditor;
 use Modules\TelegramBot\Entities\TelegramBot;
 use Modules\TelegramBot\Services\TelegramBotService;
-use Telegram\Bot\Laravel\Facades\Telegram;
 
 class TelegramBotController extends Controller
 {

@@ -19,4 +19,9 @@ class TelegramBot extends Model
     {
         return json_decode($value);
     }
+
+    public function setSettingsAttribute($value)
+    {
+        $this->attributes['settings'] = json_encode($value);
+    }
 }

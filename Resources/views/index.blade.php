@@ -32,7 +32,7 @@
                                 <form class="webhook-set" action="{{ route('telegrambot.set_webhook') }}" method="POST">
                                     <div class="form-group">
                                         <label for="url">Webhook URI</label>
-                                        <input type="text" class="form-control" name="url" id="url" value="{{config('telebot.bots.akimigor_bot.webhook.url') }}">
+                                        <input type="text" class="form-control" name="url" id="url" value="{{config('telebot.bots.' . config('telebot.default') . '.webhook.url') }}">
                                     </div>
                                     @csrf
                                 </form>

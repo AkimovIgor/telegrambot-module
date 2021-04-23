@@ -27,7 +27,7 @@ class MainUpdateHandler extends BaseUpdateHandler
     public static function trigger(Update $update, TeleBot $bot)
     {
         if (isset($update->message)) {
-            $data = $update->message->text;
+            $data = $update->message->text ?? '';
         } else {
             $data = $update->callback_query->data;
         }
@@ -51,16 +51,6 @@ class MainUpdateHandler extends BaseUpdateHandler
         } else {
             $mode = $this->data['mode'];
         }
-
-//        if ($tgUser->user) {
-//            $mode = 'success';
-//        }
-
-//        if (isset($this->update->callback_query) && $this->getBotData() == 'reset_password') {
-//            $mode = 'send_code_again';
-//            $this->data['mode'] = $mode;
-//            $this->setBotFlow($this->data);
-//        }
 
         if(isset($this->update->callback_query) && $this->getBotData() == 'register'){
             $mode = "register";
@@ -257,7 +247,7 @@ class MainUpdateHandler extends BaseUpdateHandler
         if (isset($this->update->callback_query)) {
             return $this->update->callback_query->data;
         }
-        return $this->update->message->text;
+        return $this->update->message->text ?? '';
     }
 
     /**

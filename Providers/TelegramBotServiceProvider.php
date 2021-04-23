@@ -2,6 +2,7 @@
 
 namespace Modules\TelegramBot\Providers;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
 
@@ -49,18 +50,12 @@ class TelegramBotServiceProvider extends ServiceProvider
      */
     protected function registerConfig()
     {
-//        $this->publishes([
-//            module_path($this->moduleName, 'Config/config.php') => config_path($this->moduleNameLower . '.php'),
-//        ], 'config');
-        $this->mergeConfigFrom(
-            module_path($this->moduleName, 'Config/config.php'), $this->moduleNameLower
-        );
-        $this->mergeConfigFrom(
-            module_path($this->moduleName, 'Config/telebot.php'), 'telebot'
-        );
         $this->publishes([
             module_path($this->moduleName, 'Config/telebot.php') => config_path('telebot.php'),
         ], 'config');
+        $this->mergeConfigFrom(
+            module_path($this->moduleName, 'Config/telebot.php'), 'telebot'
+        );
     }
 
     /**

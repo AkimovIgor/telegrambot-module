@@ -36,15 +36,6 @@ class InfoCommand extends CommandHandler
             }
             $response = trim($response, ', ');
             $response .= "\n/help";
-
-            $keyboard = [
-                [
-                    (new InlineKeyboardButton([
-                        'text' => 'Забыли пароль? Сгенерировать новый',
-                        'callback_data' => 'setpassword_0'
-                    ])),
-                ],
-            ];
         } else {
             $response .= 'Вы не зарегистрированы в системе. /register';
             $keyboard = [
@@ -55,20 +46,21 @@ class InfoCommand extends CommandHandler
                     ])),
                 ],
             ];
+
+            $replyMarkup = ReplyKeyboardMarkup::create([
+                'inline_keyboard' => $keyboard,
+                'resize_keyboard' => true,
+                'one_time_keyboard' => true
+            ]);
+            $this->sendMessage([
+                'text' => $response,
+                'parse_mode' => 'HTML',
+                'reply_markup' => $replyMarkup
+            ]);
         }
-
-
-
-        $replyMarkup = ReplyKeyboardMarkup::create([
-            'inline_keyboard' => $keyboard,
-            'resize_keyboard' => true,
-            'one_time_keyboard' => true
-        ]);
-
         $this->sendMessage([
             'text' => $response,
-            'parse_mode' => 'HTML',
-            'reply_markup' => $replyMarkup
+            'parse_mode' => 'HTML'
         ]);
     }
 }

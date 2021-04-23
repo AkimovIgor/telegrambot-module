@@ -46,17 +46,9 @@ class RegisterCommand extends CommandHandler
                 (new InlineKeyboardButton([
                     'text' => 'Регистрация',
                     'callback_data' => 'register'
-                ])),
-                (new InlineKeyboardButton([
-                    'text' => 'Помощь',
-                    'callback_data' => 'help'
-                ])),
+                ]))
             ],
         ];
-
-        $replyMarkupRemove = ReplyKeyboardMarkup::create([
-            'remove_keyboard' => true
-        ]);
 
         $replyMarkup = ReplyKeyboardMarkup::create([
             'inline_keyboard' => $keyboard,

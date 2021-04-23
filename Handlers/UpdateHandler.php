@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use App\User;
 use App\Role;
 use Modules\TelegramBot\Entities\TelegramBot;
+use Modules\TelegramBot\Entities\TelegramBotFlow;
 use Modules\TelegramBot\Mails\ConfirmCode;
 use WeStacks\TeleBot\Interfaces\UpdateHandler as BaseUpdateHandler;
 use WeStacks\TeleBot\Objects\InlineKeyboardButton;
@@ -23,6 +24,8 @@ class UpdateHandler extends BaseUpdateHandler
 {
     private static $name;
 
+    protected $prevAction;
+
     public static function trigger(Update $update, TeleBot $bot)
     {
         return true;
@@ -31,7 +34,14 @@ class UpdateHandler extends BaseUpdateHandler
     public function handle()
     {
         $update = $this->update;
-        $bot = $this->bot;
+
+        $this->prevAction = $this->getBotFlow();
+
+        $this->sendMessage([
+            'text' => $prev ?? 'Empty'
+        ]);
+
+        $this->saveBotFlow();
 
         if (isset($update->callback_query)) {
             switch ($update->callback_query->data) {
@@ -39,6 +49,7 @@ class UpdateHandler extends BaseUpdateHandler
                     $this->answerCallbackQuery([
                         'callback_query_id' => $update->callback_query->id
                     ]);
+                    $this->setBotFlow('register');
                     $this->sendMessage([
                         'text' => 'Введите Ваш email:'
                     ]);
@@ -95,6 +106,59 @@ class UpdateHandler extends BaseUpdateHandler
                     break;
             }
         }
+    }
+
+    protected function getUpdate()
+    {
+        return $this->update;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function saveBotFlow()
+    {
+        $update = $this->update;
+        if (isset($update->callback_query)) {
+            $chatId = $update->callback_query->from->id;
+            $command = $update->callback_query->data;
+        } else {
+            $chatId = $update->message->from->id;
+            $command = $update->message->text;
+        }
+
+        $flow = new TelegramBotFlow([
+            'chat_id' => $chatId,
+            'command' => $command
+        ]);
+        return $flow->save();
+    }
+
+    protected function getBotFlow()
+    {
+        $update = $this->update;
+        if (isset($update->callback_query)) {
+            $chatId = $update->callback_query->from->id;
+        } else {
+            $chatId = $update->message->from->id;
+        }
+        $flow = TelegramBotFlow::where('chat_id', $chatId)->orderBy('id', 'DESC')->first();
+        return $flow->command ?? null;
+    }
+
+    protected function setBotFlow($command)
+    {
+        $update = $this->update;
+        if (isset($update->callback_query)) {
+            $chatId = $update->callback_query->from->id;
+        } else {
+            $chatId = $update->message->from->id;
+        }
+        $flow = new TelegramBotFlow([
+            'chat_id' => $chatId,
+            'command' => $command
+        ]);
+        return $flow->save();
     }
 
     /**
@@ -313,7 +377,8 @@ class UpdateHandler extends BaseUpdateHandler
             $user = new User([
                 'name' => $name,
                 'email' => $email,
-                'password' => $password
+                'password' => $password,
+                'telegram_user_id' => $this->update->callback_query->from->id
             ]);
 
             $user->save();
@@ -332,6 +397,7 @@ class UpdateHandler extends BaseUpdateHandler
             $user = User::find($userId);
             $user->password = $password;
             $user->email = $email;
+            $user->telegram_user_id = $this->update->callback_query->from->id;
             $user->save();
             if (isset($role) && $role) {
                 $user->roles()->detach($user->roles);

@@ -20,7 +20,8 @@ return [
                 \Modules\TelegramBot\Commands\HelpCommand::class,
                 \Modules\TelegramBot\Commands\RegisterCommand::class,
                 \Modules\TelegramBot\Commands\InfoCommand::class,
-                \Modules\TelegramBot\Handlers\UpdateHandler::class
+//                \Modules\TelegramBot\Handlers\UpdateHandler::class
+                \Modules\TelegramBot\Handlers\MainUpdateHandler::class
             ],
             'poll'    => [
                 'limit'             => 100,

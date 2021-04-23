@@ -13,8 +13,20 @@ class TelegramUser extends Model
 
     protected $guarded = [];
 
+    protected $appends = ['data'];
+
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function setDataAttribute($value)
+    {
+        $this->attributes['data'] = json_encode($value);
+    }
+
+    public function getDataAttribute($value)
+    {
+        return json_decode($value, true);
     }
 }

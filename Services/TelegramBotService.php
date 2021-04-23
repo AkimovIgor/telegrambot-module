@@ -15,6 +15,20 @@ class TelegramBotService
         $this->bot = new BotManager(config('telebot'));
     }
 
+    public function getBot()
+    {
+        return $this->bot;
+    }
+
+    public function getBotData()
+    {
+        $update = $this->getUpdates();
+        if (isset($update->callback_query)) {
+            return $update->callback_query->data;
+        }
+        return $update->message->text;
+    }
+
     public function getBotInfo()
     {
         return $this->bot->getMe();
@@ -66,11 +80,6 @@ class TelegramBotService
 
     public function handleCommands()
     {
-//        if (env('APP_ENV') == 'p') {
-//            $update = Telegram::commandsHandler(false, ['timeout' => 20]);
-//        } else {
-//            $update = Telegram::commandsHandler(true);
-//        }
         return 1;
     }
 

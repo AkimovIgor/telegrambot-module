@@ -29,6 +29,9 @@ class StartCommand extends CommandHandler
     public function handle()
     {
         $this->showRegister();
+        if(!$user = TelegramUser::where('chat_id', $this->update->message->from->id)->first()) {
+            $this->makeTelegramUser();
+        }
         $this->data = $this->getBotFlow();
         $this->data['mode'] = 'register';
         $this->setBotFlow($this->data);

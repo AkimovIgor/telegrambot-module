@@ -57,6 +57,7 @@ class InfoCommand extends CommandHandler
                 'parse_mode' => 'HTML',
                 'reply_markup' => $replyMarkup
             ]);
+            return;
         }
         $this->sendMessage([
             'text' => $response,

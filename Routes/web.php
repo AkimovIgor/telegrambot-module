@@ -12,6 +12,11 @@
 */
 
 Route::prefix('plugins/telegrambot')->group(function() {
+    Route::post('/webhook', 'TelegramBotController@webhook')
+        ->name('telegrambot.webhook');
+});
+
+Route::prefix('plugins/telegrambot')->middleware(['auth', 'role:admin'])->group(function() {
     Route::get('/', 'TelegramBotController@index');
 
     Route::post('/settings', 'TelegramBotController@settings')
@@ -25,7 +30,4 @@ Route::prefix('plugins/telegrambot')->group(function() {
 
     Route::delete('/settings/delete_webhook', 'TelegramBotController@deleteWebhook')
         ->name('telegrambot.delete_webhook');
-
-    Route::post('/webhook', 'TelegramBotController@webhook')
-        ->name('telegrambot.webhook');
 });

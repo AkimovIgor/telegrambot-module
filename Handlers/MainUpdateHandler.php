@@ -459,11 +459,12 @@ class MainUpdateHandler extends BaseUpdateHandler
                 'text' => "Вы успешно зарегистрированы!\n\nВаши данные для авторизации:\n<b>Имя:</b> {$user->name}\n<b>Email:</b> {$user->email}\n<b>Пароль:</b> {$this->data['password']}\n/info",
                 'parse_mode' => 'HTML'
             ]);
+            $this->clearSecretData();
         } elseif ($searchUser->user_id && $changed) {
-            $email = $this->data['email'];
-            $password = Hash::make($this->data['password']);
-            $role = $this->data['role'];
             $user = User::find($searchUser->user_id);
+            $email = $this->data['email'];
+            $password = $this->data['password'] ? Hash::make($this->data['password']) : $user->password;
+            $role = $this->data['role'];
             $user->password = $password;
             $user->email = $email;
             $user->telegram_user_id = $this->update->callback_query->from->id;
@@ -476,6 +477,7 @@ class MainUpdateHandler extends BaseUpdateHandler
                 'text' => "Данные успешно изменены.\n\nВаши данные для авторизации:\n<b>Имя:</b> {$user->name}\n<b>Email:</b> {$user->email}\n<b>Пароль:</b> {$this->data['password']}\n/info",
                 'parse_mode' => 'HTML'
             ]);
+            $this->clearSecretData();
         } else {
             $keyboard = [
                 [
@@ -501,5 +503,14 @@ class MainUpdateHandler extends BaseUpdateHandler
                 'reply_markup' => $replyMarkup
             ]);
         }
+
+    }
+
+    protected function clearSecretData()
+    {
+        $this->data['password'] = '';
+        $this->data['code'] = '';
+        $this->data['confirm_code'] = '';
+        $this->setBotFlow($this->data);
     }
 }

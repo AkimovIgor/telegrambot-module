@@ -70,6 +70,14 @@ class TelegramBotController extends Controller
     public function getWebhookinfo(Request $request)
     {
         $result = json_decode($this->telegramBotService->getWebhookInfo());
+
+        if (!$result && !isset($result->has_custom_certificate)) {
+            return redirect()->back()->with([
+                'class' => 'info',
+                'message' => 'API token don\'t  set .'
+            ]);
+        }
+
         $hasCertificates = $result->has_custom_certificate ?: 'false';
         if ($result->url) {
             $message = "

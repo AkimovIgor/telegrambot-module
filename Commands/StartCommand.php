@@ -67,8 +67,8 @@ class StartCommand extends CommandHandler
         $telegramUser = new TelegramUser([
             'chat_id' => $this->getChatUser()->id,
             'is_bot' => $this->getChatUser()->is_bot,
-            'first_name' => $this->getChatUser()->first_name,
-            'last_name' => $this->getChatUser()->last_name,
+            'first_name' => $this->getChatUser()->first_name ?? null,
+            'last_name' => $this->getChatUser()->last_name ?? null,
             'username' => $this->getChatUser()->username,
             'language_code' => $this->getChatUser()->language_code ?? null,
         ]);

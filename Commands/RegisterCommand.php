@@ -32,10 +32,10 @@ class RegisterCommand extends CommandHandler
             $telegramUser = new TelegramUser([
                 'chat_id' => $data->id,
                 'is_bot' => $data->is_bot,
-                'first_name' => $data->first_name,
-                'last_name' => $data->last_name,
+                'first_name' => $data->first_name ?? null,
+                'last_name' => $data->last_name ?? null,
                 'username' => $data->username,
-                'language_code' => $data->language_code,
+                'language_code' => $data->language_code ?? null,
             ]);
 
             $telegramUser->save();

@@ -212,7 +212,7 @@ class MainUpdateHandler extends BaseUpdateHandler
             $this->setPassword();
         } else {
             $this->sendMessage([
-                'text' => 'Неправильный код подтверждения',
+                'text' => 'Неправильный код подтверждения /info',
             ]);
         }
     }

@@ -9,23 +9,10 @@
             "name": "AkimovIgor",
             "email": "akimovigor5417@gmail.com"
         }
-    ],
-    "extra": {
-        "laravel": {
-            "providers": [
-                "WeStacks\\TeleBot\\Laravel\\TeleBotServiceProvider"
-            ],
-            "aliases": {
-                "TeleBot": "WeStacks\\TeleBot\\Laravel\\TeleBot"
-            }
-        }
-    },
+    ],   
     "autoload": {
         "psr-4": {
             "Modules\\TelegramBot\\": ""
         }
-    },
-    "require": {
-        "westacks/telebot": "dev-develop"
     }
 }
